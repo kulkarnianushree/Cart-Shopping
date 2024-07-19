@@ -3,60 +3,29 @@ import { Fragment, useEffect } from 'react';
 import Cart from './components/Cart/Cart';
 import Layout from './components/Layout/Layout';
 import Products from './components/Shop/Products';
-import { UiAction } from './store/ui-slice';
 import Notification from './components/UI/Notification';
+import { fetchdata, sendData } from './store/cart-slice';
 
-let initial = true
+let initial = true;
 
 function App() {
-  const show = useSelector((state) => state.Ui.Cartshow);
-  const cart = useSelector((state) => state.Cart);
-  const notification = useSelector((state) => state.Ui.notification);
+  const show = useSelector((state) => state.ui.Cartshow); // Ensure 'ui' is the correct slice name
+  const cart = useSelector((state) => state.cart); // Ensure 'cart' is the correct slice name
+  const notification = useSelector((state) => state.ui.notification); // Ensure 'ui' is the correct slice name
   const dispatch = useDispatch();
 
+  useEffect(()=>{
+    dispatch(fetchdata())
+  },[dispatch])
+
   useEffect(() => {
-    const sendCartData = async () => {
-      dispatch(
-        UiAction.NotificationStatus({
-          status: 'Waiting',
-          title: 'Sending....',
-          message: 'Sending data is in process',
-        })
-      );
-
-      try {
-        const response = await fetch('https://cart-shopping-21a46-default-rtdb.firebaseio.com/cart.json', {
-          method: 'PUT',
-          body: JSON.stringify(cart),
-        });
-
-        if (!response.ok) {
-          throw new Error('Something went wrong');
-        }
-
-        dispatch(
-          UiAction.NotificationStatus({
-            status: 'Success',
-            title: 'Success',
-            message: 'Successfully sent the data',
-          })
-        );
-      } catch (error) {
-        dispatch(
-          UiAction.NotificationStatus({
-            status: 'Failed',
-            title: 'Error',
-            message: error.message,
-          })
-        );
-      }
-    };
-    if(initial){
-      initial=false
-      return
+    if (initial) {
+      initial = false;
+      return;
     }
-
-    sendCartData();
+    if(cart.changed){
+      dispatch(sendData(cart));
+    }
   }, [cart, dispatch]);
 
   return (
